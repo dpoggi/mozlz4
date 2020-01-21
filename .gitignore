@@ -1,0 +1,40 @@
+# General
+*~
+*.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (including Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+mozlz4
+
+# Debug files
+*.dSYM/
