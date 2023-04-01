@@ -18,12 +18,12 @@ static const size_t kMagicNumberSize = sizeof(kMagicNumber) / sizeof(*kMagicNumb
 
 static const char *const kEOFErrorMessage = "Unexpected end of file";
 static const char *const kUnknownReadErrorMessage = "fread unable to read enough bytes, but ferror and feof return 0";
+static const char *const kUnrecognizedSignatureErrorMessage = "Unrecognized file signature";
+static const char *const kUnableToDecodeErrorMessage = "Unable to decode LZ4 data";
 
-void mozlz4_perror(struct mozlz4_error error) {
-    (void)fputs(error.prefix, stderr);
-    (void)fputs(": ", stderr);
-    (void)fputs(error.message, stderr);
-    (void)fputc('\n', stderr);
+void mozlz4_perror(struct mozlz4_error error)
+{
+    (void)fprintf(stderr, "%s: %s\n", error.prefix, error.message);
 }
 
 #define RETURN_ERROR(_prefix, _message)         \
@@ -35,7 +35,8 @@ void mozlz4_perror(struct mozlz4_error error) {
         return NULL;                            \
     } while (false)
 
-uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_error) {
+uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_error)
+{
     char signature[kMagicNumberSize];
     size_t chars_read = fread(signature, sizeof(*signature), kMagicNumberSize, stream);
     if (chars_read < kMagicNumberSize) {
@@ -48,7 +49,7 @@ uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_
     }
 
     if (memcmp(signature, kMagicNumber, kMagicNumberSize) != 0) {
-        RETURN_ERROR("mozlz4_decode", "Unrecognized file signature");
+        RETURN_ERROR("mozlz4_decode", kUnrecognizedSignatureErrorMessage);
     }
 
     uint32_t dec_size;
@@ -124,7 +125,7 @@ uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_
         free(dec_data);
         free(enc_data);
 
-        RETURN_ERROR("compression_decode_buffer", "Unable to decode LZ4 data");
+        RETURN_ERROR("compression_decode_buffer", kUnableToDecodeErrorMessage);
     }
 
     free(enc_data);

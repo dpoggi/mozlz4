@@ -16,8 +16,8 @@ make
 
 ## License
 
-[MIT License](https://opensource.org/licenses/MIT)
+[BSD Zero Clause License](https://spdx.org/licenses/0BSD.html)
 
 ## Copyright
 
-Copyright &copy; 2020 Dan Poggi
+Copyright &copy; 2020&ndash;2023 Dan Poggi
