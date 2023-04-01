@@ -2,13 +2,13 @@
 
 ## Introduction
 
-Decompresses `*.jsonlz4` files used by Firefox.
+Decompresses `*.jsonlz4` files used by Firefox. Tested with Clang on macOS and Linux.
 
 ## Getting Started
 
 ```sh
 # Build
-make
+make CC=clang
 
 # Run
 ./mozlz4 [.jsonlz4 file]
