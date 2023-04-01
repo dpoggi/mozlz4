@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Decompresses `*.jsonlz4` files used by Firefox. Currently macOS only.
+Decompresses `*.jsonlz4` files used by Firefox.
 
 ## Getting Started
 
