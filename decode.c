@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include <compression.h>
+#include <lz4.h>
 
 static const size_t kBufferSize = 4096UL;
 static const size_t kBufferGrowthFactor = 2UL;
