@@ -1,6 +1,7 @@
 #include "decode.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,14 +9,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <compression.h>
 #include <lz4.h>
+
+#define COUNT_OF(_x) (sizeof(_x) / sizeof(0[(_x)]))
 
 static const size_t kBufferSize = 4096UL;
 static const size_t kBufferGrowthFactor = 2UL;
 
 static const char kMagicNumber[] = {'m', 'o', 'z', 'L', 'z', '4', '0', '\0'};
-static const size_t kMagicNumberSize = sizeof(kMagicNumber) / sizeof(*kMagicNumber);
 
 static const char *const kEOFErrorMessage = "Unexpected end of file";
 static const char *const kUnknownReadErrorMessage = "fread unable to read enough bytes, but ferror and feof return 0";
@@ -36,11 +37,11 @@ void mozlz4_perror(struct mozlz4_error error)
         return NULL;                            \
     } while (false)
 
-uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_error)
+char *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_error)
 {
-    char signature[kMagicNumberSize];
-    size_t chars_read = fread(signature, sizeof(*signature), kMagicNumberSize, stream);
-    if (chars_read < kMagicNumberSize) {
+    char signature[COUNT_OF(kMagicNumber)];
+    size_t chars_read = fread(signature, sizeof(*signature), COUNT_OF(kMagicNumber), stream);
+    if (chars_read < COUNT_OF(kMagicNumber)) {
         int err = ferror(stream);
         if (err != 0) {
             RETURN_ERROR("fread", strerror(err));
@@ -49,7 +50,7 @@ uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_
         }
     }
 
-    if (memcmp(signature, kMagicNumber, kMagicNumberSize) != 0) {
+    if (memcmp(signature, kMagicNumber, COUNT_OF(kMagicNumber)) != 0) {
         RETURN_ERROR("mozlz4_decode", kUnrecognizedSignatureErrorMessage);
     }
 
@@ -64,8 +65,12 @@ uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_
         }
     }
 
+    if (dec_size > (uint32_t)INT_MAX) {
+        RETURN_ERROR("mozlz4_decode", strerror(EFBIG));
+    }
+
     size_t enc_data_size = kBufferSize;
-    uint8_t *enc_data = malloc(enc_data_size);
+    char *enc_data = malloc(enc_data_size);
     if (enc_data == NULL) {
         RETURN_ERROR("malloc", strerror(ENOMEM));
     }
@@ -83,7 +88,7 @@ uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_
             enc_data_size *= kBufferGrowthFactor;
             read_size = enc_data_size - enc_size;
 
-            uint8_t *new_enc_data = realloc(enc_data, enc_data_size);
+            char *new_enc_data = realloc(enc_data, enc_data_size);
             if (new_enc_data == NULL) {
                 free(enc_data);
 
@@ -114,19 +119,25 @@ uint8_t *mozlz4_decode(FILE *stream, size_t *out_size, struct mozlz4_error *out_
         }
     }
 
-    uint8_t *dec_data = malloc(dec_size);
+    if (enc_size > (size_t)INT_MAX) {
+        free(enc_data);
+
+        RETURN_ERROR("mozlz4_decode", strerror(EFBIG));
+    }
+
+    char *dec_data = malloc(dec_size);
     if (dec_data == NULL) {
         free(enc_data);
 
         RETURN_ERROR("malloc", strerror(ENOMEM));
     }
 
-    size_t bytes_decoded = compression_decode_buffer(dec_data, dec_size, enc_data, enc_size, NULL, COMPRESSION_LZ4_RAW);
-    if (bytes_decoded < dec_size) {
+    int bytes_decoded = LZ4_decompress_safe(enc_data, dec_data, (int)enc_size, (int)dec_size);
+    if (bytes_decoded < (int)dec_size) {
         free(dec_data);
         free(enc_data);
 
-        RETURN_ERROR("compression_decode_buffer", kUnableToDecodeErrorMessage);
+        RETURN_ERROR("LZ4_decompress_safe", kUnableToDecodeErrorMessage);
     }
 
     free(enc_data);

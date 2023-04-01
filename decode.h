@@ -2,7 +2,6 @@
 #define DECODE_H_
 
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -36,6 +35,6 @@ struct mozlz4_error {
 
 MZ4_EXTERN void mozlz4_perror(struct mozlz4_error error);
 
-MZ4_EXTERN uint8_t *mozlz4_decode(FILE *MZ4_RESTRICT stream, size_t *MZ4_RESTRICT out_size, struct mozlz4_error *MZ4_RESTRICT out_error) MZ4_NODISCARD;
+MZ4_EXTERN char *mozlz4_decode(FILE *MZ4_RESTRICT stream, size_t *MZ4_RESTRICT out_size, struct mozlz4_error *MZ4_RESTRICT out_error) MZ4_NODISCARD;
 
 #endif  // DECODE_H_

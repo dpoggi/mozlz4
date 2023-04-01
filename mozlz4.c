@@ -5,8 +5,9 @@
 
 #include "decode.h"
 
-int main(int argc, char *argv[]) {
-    uint8_t *data;
+int main(int argc, char *argv[])
+{
+    char *data;
     size_t size;
     struct mozlz4_error error;
 
